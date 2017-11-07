@@ -1,16 +1,23 @@
-var express = require('express');
-var app = express();
+const express = require('express');
+const app = express();
+const compression = require('compression');
+app.use(compression());
 
-app.set('port', (process.env.PORT || 5000));
+const getDevicePath = req => {
+  const ua = req.header('user-agent');
+  return /mobile/i.test(ua) ? '/public-mobile' : '/public-desktop';
+};
 
-app.use(express.static(__dirname + '/public'));
+/* app.use(express.static(__dirname + '/public-mobile')); */
 
-// views is directory for all template files
-app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
+app.set('port', process.env.PORT || 5000);
 
-app.get('/', function(request, response) {
-  response.render('pages/index');
+app.get('/', function(req, res) {
+  res.sendFile(__dirname + getDevicePath(req) + '/index.html');
+});
+
+app.get(/(.*?)(chunk.js|bundle.js|.ico|.svg|bundle.css)/, function(req, res) {
+  res.sendFile(__dirname + getDevicePath(req) + req.path);
 });
 
 app.listen(app.get('port'), function() {
